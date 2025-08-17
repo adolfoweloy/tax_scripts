@@ -1,26 +1,21 @@
-import pdfplumber
-import glob
 import csv
-import time
 import os
-from datetime import datetime
 import argparse
-from exchange_service import ExchangeRateService, DefaultExchangeRateService, LocalExchangeRateService
-import number_utils
+from exchange_service import DefaultExchangeRateService, LocalExchangeRateService
+from model import RedemptionsReportService
 
-def add_aud_forex(row, exchange_service: ExchangeRateService):
-    payment_date = row[4]
-    parsed_date = datetime.strptime(payment_date, "%d/%m/%Y").date()
-    rate = exchange_service.get_rate("BRL", "AUD", parsed_date)
-    row.append(rate)
-    return row
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Process financial data from PDFs')
     parser.add_argument('directory', nargs='?', default="", help='Directory containing PDF files')
     parser.add_argument('--dry-run', action='store_true', help='Run without making external API calls')
     parser.add_argument('--output', type=str, default="output.csv", help='Output filename (default: output.csv)')
+    parser.add_argument('--report', type=str, choices=['redemptions', 'previous_balance', 'investments'], 
+                        default="redemptions", help='Report type to process (default: redemptions)')
     return parser.parse_args()
+
+
 
 def main():
     args = parse_arguments()
@@ -28,7 +23,7 @@ def main():
     # Choose the exchange rate service based on dry run mode
     exchange_service = LocalExchangeRateService() if args.dry_run else DefaultExchangeRateService()
 
-    all_redemptions = []
+    csv_rows = []
     header = None
 
     # if a directory is given, then search for all pdfs within that directory
@@ -36,26 +31,9 @@ def main():
     directory = args.directory
     pattern = os.path.join(directory, "*.pdf") if directory else "*.pdf"
 
-    # iterate over all pdfs within the given path pattern 
-    for filepath in glob.glob(pattern):
-        print(f"Processing {filepath}")
-        with pdfplumber.open(filepath) as pdf:
-            page = pdf.pages[0]
-            tables = page.extract_tables()
-            redemptions = tables[3]  # 4th table for the CDI report
-            # Capturing the header only once
-            if header is None:
-                header = redemptions[0]
-                header.append("BRLAUD Rate")
-
-            # Processing each line in the table
-            for row in redemptions[1:-1]:
-                time.sleep(1) # sleep added to avoid being throttled by exchangerate host
-                converted = [number_utils.continental_to_english(cell) for cell in row]
-                # ignoring empty lines
-                if len(row[0]) > 0:
-                    converted = add_aud_forex(converted, exchange_service)
-                    all_redemptions.append(converted)
+    # iterate over all pdfs within the given path pattern
+    report_service = RedemptionsReportService(exchange_service)
+    csv_rows, header = report_service.process_report(pattern)
 
     # Generating the CSV report
     output_file = args.output
@@ -63,9 +41,12 @@ def main():
         writer = csv.writer(f, delimiter=';')
         if header:
             writer.writerow(header)
-        writer.writerows(all_redemptions)
+        writer.writerows(csv_rows)
 
-    print(f"CSV '{output_file}' created with {len(all_redemptions)} lines.")
+    print(f"CSV '{output_file}' created with {len(csv_rows)} lines.")
+
+
+
 
 if __name__ == "__main__":
     main()
