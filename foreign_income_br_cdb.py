@@ -1,23 +1,12 @@
-import sys
 import pdfplumber
 import glob
 import csv
-import re
 import time
 import os
 from datetime import datetime
 import argparse
 from exchange_service import ExchangeRateService, DefaultExchangeRateService, LocalExchangeRateService
-
-def br_to_us(number: str) -> str:
-    """
-    Convert numeric strings from Brazilian format to US
-    e.g. "1.234,56 to 1,234.56
-    """
-    number = number.strip()
-    if re.fullmatch(r'[\d\.\,]+', number):
-        return number.replace('.', '').replace(',', '.')
-    return number
+import number_utils
 
 def add_aud_forex(row, exchange_service: ExchangeRateService):
     payment_date = row[4]
@@ -30,6 +19,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Process financial data from PDFs')
     parser.add_argument('directory', nargs='?', default="", help='Directory containing PDF files')
     parser.add_argument('--dry-run', action='store_true', help='Run without making external API calls')
+    parser.add_argument('--output', type=str, default="output.csv", help='Output filename (default: output.csv)')
     return parser.parse_args()
 
 def main():
@@ -61,14 +51,14 @@ def main():
             # Processing each line in the table
             for row in redemptions[1:-1]:
                 time.sleep(1) # sleep added to avoid being throttled by exchangerate host
-                converted = [br_to_us(cell) for cell in row]
+                converted = [number_utils.continental_to_english(cell) for cell in row]
                 # ignoring empty lines
                 if len(row[0]) > 0:
                     converted = add_aud_forex(converted, exchange_service)
                     all_redemptions.append(converted)
 
     # Generating the CSV report
-    output_file = "redemptions.csv"
+    output_file = args.output
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f, delimiter=';')
         if header:
