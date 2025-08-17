@@ -9,22 +9,22 @@ from datetime import datetime
 import argparse
 from exchange_service import ExchangeRateService, DefaultExchangeRateService, LocalExchangeRateService
 
+def br_to_us(number: str) -> str:
+    """
+    Convert numeric strings from Brazilian format to US
+    e.g. "1.234,56 to 1,234.56
+    """
+    number = number.strip()
+    if re.fullmatch(r'[\d\.\,]+', number):
+        return number.replace('.', '').replace(',', '.')
+    return number
+
 def add_aud_forex(row, exchange_service: ExchangeRateService):
     payment_date = row[4]
     parsed_date = datetime.strptime(payment_date, "%d/%m/%Y").date()
     rate = exchange_service.get_rate("BRL", "AUD", parsed_date)
     row.append(rate)
     return row
-
-def br_to_us(cell):
-    """
-    Convert numeric strings from Brazilian format to US
-    e.g. "1.234,56 to 1,234.56
-    """
-    cell = cell.strip()
-    if re.fullmatch(r'[\d\.\,]+', cell):
-        return cell.replace('.', '').replace(',', '.')
-    return cell
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Process financial data from PDFs')
@@ -56,6 +56,8 @@ def main():
             # Capturing the header only once
             if header is None:
                 header = redemptions[0]
+                header.append("BRLAUD Rate")
+
             # Processing each line in the table
             for row in redemptions[1:-1]:
                 time.sleep(1) # sleep added to avoid being throttled by exchangerate host
