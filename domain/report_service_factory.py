@@ -10,7 +10,7 @@ class ReportServiceFactory:
         if report_type == "redemptions":
             return RedemptionsReportService(exchange_service)
         
-        if report_type == "previous_balance":
+        if report_type == "balance":
             return BalanceReportService(exchange_service)
         
 

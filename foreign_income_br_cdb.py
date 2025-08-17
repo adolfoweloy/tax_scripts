@@ -10,7 +10,7 @@ def parse_arguments():
     parser.add_argument('directory', nargs='?', default="", help='Directory containing PDF files')
     parser.add_argument('--dry-run', action='store_true', help='Run without making external API calls')
     parser.add_argument('--output', type=str, default="output.csv", help='Output filename (default: output.csv)')
-    parser.add_argument('--report', type=str, choices=['redemptions', 'previous_balance', 'investments'], 
+    parser.add_argument('--report', type=str, choices=['redemptions', 'balance', 'investments'], 
                         default="redemptions", help='Report type to process (default: redemptions)')
     return parser.parse_args()
 

@@ -15,7 +15,7 @@ class BalanceReportService(ReportService):
         balance_table = tables[1]  # 2nd table for the CDI report
 
         header = balance_table[0]
-        header.append("Previous Balance Date")
+        header.append("Balance Date")
         header.append("BRLAUD Rate")
         return header
 
@@ -25,11 +25,10 @@ class BalanceReportService(ReportService):
         page = pages[0]
         tables = page.extract_tables()
 
-        previous_balance_date = self._extract_balance_date(page)
-
-        # this may be wrong. it might be the case that the date here must be the last day of the current month being processed
-        exchange_rate = self._br_to_aud_forex(previous_balance_date)
-
+        # processing previous balance date
+        previous_balance_date = self._extract_balance_date(page, r"Saldo Anterior em (\d{2}/\d{2}/\d{4})")
+        exchange_rate_previous_balance = self._br_to_aud_forex(previous_balance_date)
+        
         balance_table = tables[1]  # 2nd table for the CDI report
 
         for row in balance_table[1:-1]:
@@ -38,21 +37,36 @@ class BalanceReportService(ReportService):
             # ignoring empty lines
             if len(row[0]) > 0:
                 converted.append(previous_balance_date)
-                converted.append(exchange_rate)
+                converted.append(exchange_rate_previous_balance)
                 result.append(converted)
         
+        # procesing current balance date
+        current_balance_date = self._extract_balance_date(page, r"Saldo Atual em (\d{2}/\d{2}/\d{4})")
+        exchange_rate_current_balance = self._br_to_aud_forex(current_balance_date)
+
+
+        balance_table = tables[4]
+        for row in balance_table[1:-1]:
+            time.sleep(1) # sleep added to avoid being throttled by exchangerate host
+            converted = [number_utils.continental_to_english(cell) for cell in row]
+            # ignoring empty lines
+            if len(row[0]) > 0:
+                converted.append(current_balance_date)
+                converted.append(exchange_rate_current_balance)
+                result.append(converted)
+
         return result
     
 
-    def _extract_balance_date(self, page):
-        previous_balance_date = None
+    def _extract_balance_date(self, page, pattern: re.Pattern):
+        balance_date = None
         text = page.extract_text()
-        match = re.search(r"Saldo Anterior em (\d{2}/\d{2}/\d{4})", text)
+        match = re.search(pattern, text)
         if match:
-            previous_balance_date = match.group(1)
-        if previous_balance_date is None:
-            raise ValueError("Previous balance date not found in the document.")
-        return previous_balance_date
+            balance_date = match.group(1)
+        if balance_date is None:
+            raise ValueError("Balance date not found in the document.")
+        return balance_date
     
 
     def _br_to_aud_forex(self, rate_on_date):
