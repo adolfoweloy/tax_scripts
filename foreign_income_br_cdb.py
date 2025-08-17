@@ -2,8 +2,7 @@ import csv
 import os
 import argparse
 from service.exchange_service import DefaultExchangeRateService, LocalExchangeRateService
-from domain.redemptions_report_service import RedemptionsReportService
-
+from domain.report_service_factory import ReportServiceFactory
 
 
 def parse_arguments():
@@ -20,9 +19,6 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    # Choose the exchange rate service based on dry run mode
-    exchange_service = LocalExchangeRateService() if args.dry_run else DefaultExchangeRateService()
-
     csv_rows = []
     header = None
 
@@ -32,7 +28,9 @@ def main():
     pattern = os.path.join(directory, "*.pdf") if directory else "*.pdf"
 
     # iterate over all pdfs within the given path pattern
-    report_service = RedemptionsReportService(exchange_service)
+    exchange_service = LocalExchangeRateService() if args.dry_run else DefaultExchangeRateService()
+    report_service = ReportServiceFactory.create_report_service(args.report, exchange_service)
+
     csv_rows, header = report_service.process_report(pattern)
 
     # Generating the CSV report
