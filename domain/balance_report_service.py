@@ -26,6 +26,8 @@ class BalanceReportService(ReportService):
         tables = page.extract_tables()
 
         previous_balance_date = self._extract_balance_date(page)
+
+        # this may be wrong. it might be the case that the date here must be the last day of the current month being processed
         exchange_rate = self._br_to_aud_forex(previous_balance_date)
 
         balance_table = tables[1]  # 2nd table for the CDI report
