@@ -1,7 +1,7 @@
 import csv
 import os
 import argparse
-from exchange_service import DefaultExchangeRateService, LocalExchangeRateService
+from service.exchange_service import DefaultExchangeRateService, LocalExchangeRateService
 from domain.redemptions_report_service import RedemptionsReportService
 
 

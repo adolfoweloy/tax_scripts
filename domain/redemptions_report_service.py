@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 import number_utils
-from exchange_service import ExchangeRateService
+from service.exchange_service import ExchangeRateService
 from .model import ReportService
 
 class RedemptionsReportService(ReportService):
