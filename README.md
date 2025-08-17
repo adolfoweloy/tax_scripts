@@ -11,12 +11,12 @@ Manually copying the data from PDFs to a spreadsheet while preparing tax report 
 
 ## Current available script(s)
 
-1. `foreign_income_br_cdi.py`: this script reads reports provided by Bradesco informing statement monthly allowing me to find the interests earned for a given financial year.
+1. `foreign_income_br_cdb.py`: this script reads reports provided by Bradesco informing statement monthly allowing me to find the interests earned for a given financial year.
 
 ## Running
 
 The current available script relies on exchangerate.host API to fetch, well, the exchange rate from BRL to AUD on a given point in time.
-So, in order for `foreign_income_br_cdi.py` to work, one needs to provide the access key for your account with the `EXCHANGE_RATE_HOST_API_ACCESS_KEY` environment variable.
+So, in order for `foreign_income_br_cdb.py` to work, one needs to provide the access key for your account with the `EXCHANGE_RATE_HOST_API_ACCESS_KEY` environment variable.
 
  
 
