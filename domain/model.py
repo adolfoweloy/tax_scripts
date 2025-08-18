@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod 
 import pdfplumber
+from pdfplumber.page import Page
 import glob
 
 class ReportService(ABC):
@@ -8,7 +9,6 @@ class ReportService(ABC):
     def process_report(self, pattern: str):
         all_rows = []
         header = None
-    
         for filepath in glob.glob(pattern):
             print(f"Processing {filepath}")
             with pdfplumber.open(filepath) as pdf:
@@ -24,10 +24,10 @@ class ReportService(ABC):
 
     
     @abstractmethod
-    def extract_header(self, pages):
+    def extract_header(self, pages: list[Page]):
         pass
 
     # each report implementation must define its own process method
     @abstractmethod
-    def process(self, pages):
+    def process(self, pages: list[Page]):
         pass

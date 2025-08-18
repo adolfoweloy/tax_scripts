@@ -1,5 +1,8 @@
 from datetime import datetime
 import time
+
+import pdfplumber
+from pdfplumber.page import Page
 import number_utils
 from service.exchange_service import ExchangeRateService
 from .model import ReportService
@@ -8,7 +11,7 @@ class RedemptionsReportService(ReportService):
     def __init__(self, exchange_service: ExchangeRateService):
         self.exchange_service = exchange_service
 
-    def extract_header(self, pages):
+    def extract_header(self, pages: list[Page]):
         first_page = pages[0]
         tables = first_page.extract_tables()
         redemptions = tables[3]  # 4th table for the CDI report
@@ -17,7 +20,7 @@ class RedemptionsReportService(ReportService):
         header.append("BRLAUD Rate")
         return header
 
-    def process(self, pages):
+    def process(self, pages: list[Page]):
         result = []
 
         page = pages[0]
