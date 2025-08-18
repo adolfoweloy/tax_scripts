@@ -1,7 +1,5 @@
 from datetime import datetime
-import time
 
-import pdfplumber
 from pdfplumber.page import Page
 import number_utils
 from service.exchange_service import ExchangeRateService
@@ -37,7 +35,6 @@ class BalanceReportService(ReportService):
         balance_table = tables[1]  # 2nd table for the CDI report
 
         for row in balance_table[1:-1]:
-            time.sleep(1) # sleep added to avoid being throttled by exchangerate host
             converted = [number_utils.continental_to_english(cell) for cell in row]
             # ignoring empty lines
             if len(row[0]) > 0:
@@ -50,7 +47,6 @@ class BalanceReportService(ReportService):
         exchange_rate_current_balance = self._br_to_aud_forex(current_balance_date)
         
         for row in balance_table[1:]:
-            time.sleep(1) # sleep added to avoid being throttled by exchangerate host
             if row[0] == "Total":
                 break
 

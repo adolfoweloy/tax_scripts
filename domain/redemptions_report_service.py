@@ -1,7 +1,5 @@
 from datetime import datetime
-import time
 
-import pdfplumber
 from pdfplumber.page import Page
 import number_utils
 from service.exchange_service import ExchangeRateService
@@ -27,8 +25,10 @@ class RedemptionsReportService(ReportService):
         tables = page.extract_tables()
         redemptions = tables[3]  # 4th table for the CDI report
 
-        for row in redemptions[1:-1]:
-            time.sleep(1) # sleep added to avoid being throttled by exchangerate host
+        for row in redemptions[1:]:
+            if row[0] == "Total":
+                break
+
             converted = [number_utils.continental_to_english(cell) for cell in row]
             # ignoring empty lines
             if len(row[0]) > 0:

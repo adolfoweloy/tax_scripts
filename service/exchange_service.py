@@ -10,6 +10,7 @@ Implementations of this class should handle the actual API calls,
 data lookups, or other mechanisms to obtain the exchange rates.
 """
 import requests
+import time
 from datetime import date
 from abc import ABC, abstractmethod
 
@@ -24,6 +25,8 @@ class DefaultExchangeRateService(ExchangeRateService):
         if not access_key:
             raise ValueError("Missing EXCHANGE_RATE_HOST_API_ACCESS_KEY environment variable")
 
+        time.sleep(1)  # Sleep to avoid hitting API rate limits
+        
         url = "https://api.exchangerate.host/historical"
         resp = requests.get(url, params={
             "date": on_date.isoformat(),

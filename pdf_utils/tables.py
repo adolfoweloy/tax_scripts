@@ -1,7 +1,10 @@
-import pdfplumber
 from pdfplumber.page import Page
 import re
 
+## TODO: this function has a bad smell. 
+# It extracts balance data  
+# balance data is not used within this function
+# And this makes it hard to refactor in order to make this function more generic
 def extract_current_balance_data(pages: list[Page]):
     for first_page in pages:
         # Extract the text from the first page
