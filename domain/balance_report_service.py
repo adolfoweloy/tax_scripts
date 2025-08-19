@@ -29,7 +29,7 @@ class BalanceReportService(ReportService):
         tables = page.extract_tables()
 
         # processing previous balance date
-        previous_balance_date = self._extract_balance_date(page, r"Saldo Anterior em (\d{2}/\d{2}/\d{4})")
+        previous_balance_date = pdf_tables.extract_pattern_value(page, r"Saldo Anterior em (\d{2}/\d{2}/\d{4})")
         exchange_rate_previous_balance = self._br_to_aud_forex(previous_balance_date)
         
         balance_table = tables[1]  # 2nd table for the CDI report
@@ -43,7 +43,13 @@ class BalanceReportService(ReportService):
                 result.append(converted)
         
         # processing current balance date searching across pages
-        current_balance_date, balance_table = pdf_tables.extract_current_balance_data(pages)
+        label_locations = pdf_tables.find_label_locations(["Saldo", "Atual"], pages)
+        page_index, _   = label_locations[0]
+        current_balance_date = pdf_tables.extract_pattern_value(pages[page_index], r"Saldo Atual em (\d{2}/\d{2}/\d{4})")
+        if not current_balance_date:
+            raise ValueError(f"Balance date not found at page {pages[page_index] + 1}")
+
+        balance_table = pdf_tables.extract_current_balance_data(label_locations, pages)
         exchange_rate_current_balance = self._br_to_aud_forex(current_balance_date)
         
         for row in balance_table[1:]:
@@ -61,16 +67,6 @@ class BalanceReportService(ReportService):
                 result.append(converted)
 
         return result
-    
-
-    def _extract_balance_date(self, page, pattern: re.Pattern) -> str | None:
-        balance_date = None
-        text = page.extract_text()
-        match = re.search(pattern, text)
-        if match:
-            balance_date = match.group(1)
-        return balance_date
-    
 
     def _br_to_aud_forex(self, rate_on_date):
         payment_date = rate_on_date
