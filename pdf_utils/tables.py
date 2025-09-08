@@ -39,14 +39,17 @@ def extract_pattern_value(page: Page, pattern: re.Pattern[str]) -> str | None:
         return match.group(1)
     return None
 
-## TODO: now this function should be able to collect all rows from tables that span across pages
-def extract_current_balance_data(label_locations: list[LabelLocation], pages: list[Page]) -> list[list[str]] | None:
-    if len(label_locations) > 0:
-        page_index, balance_y_position = label_locations[0]
-        first_page = pages[page_index]
+
+def extract_data_table_after_location(label_locations: list[LabelLocation], pages: list[Page]) -> list[list[str]]:
+    table_data = []
+    header_added = False
+
+    for label_location in label_locations:
+        page_index, balance_y_position = label_location
+        page = pages[page_index]
 
         # Get table objects with their positions
-        table_objects = first_page.find_tables()
+        table_objects = page.find_tables()
         target_table = None
         tables_below = []
 
@@ -56,18 +59,15 @@ def extract_current_balance_data(label_locations: list[LabelLocation], pages: li
             # Check if table is below the balance text (higher y-value means below in this coordinate system)
             if table_top > balance_y_position:
                 tables_below.append((table_top, table_obj))
-        
-        # Sort tables by y-position and get the second one (index 1)
-        if len(tables_below) >= 2:
-            tables_below.sort(key=lambda x: x[0])  # Sort by y-position
-            target_table = tables_below[1][1]  # Get the second table
-        elif len(tables_below) == 1:
+
+        if len(tables_below) > 0:
             target_table = tables_below[0][1]  # If only one table, use it
         
         if target_table:
-            table_data = target_table.extract()
-            return table_data
-        else:
-            raise ValueError("No table found after current balance text")
+            if not header_added:
+                table_data.extend(target_table.extract())
+                header_added = True
+            else:
+                table_data.extend(target_table.extract()[1:])
 
-    return None
+    return table_data

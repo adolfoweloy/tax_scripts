@@ -4,6 +4,7 @@ from pdfplumber.page import Page
 import number_utils
 from service.exchange_service import ExchangeRateService
 from .model import ReportService
+import pdf_utils.tables as pdf_tables
 
 class RedemptionsReportService(ReportService):
     def __init__(self, exchange_service: ExchangeRateService):
@@ -21,17 +22,20 @@ class RedemptionsReportService(ReportService):
     def process(self, pages: list[Page]):
         result = []
 
-        page = pages[0]
-        tables = page.extract_tables()
-        redemptions = tables[3]  # 4th table for the CDI report
+        label_locations = pdf_tables.find_label_locations(["Resgates"], pages)
+        if len(label_locations) == 0:
+            raise ValueError("Label 'Resgates' not found")
+
+        redemptions = pdf_tables.extract_data_table_after_location(label_locations, pages)
 
         for row in redemptions[1:]:
             if row[0] == "Total":
                 break
 
             converted = [number_utils.continental_to_english(cell) for cell in row]
-            # ignoring empty lines
-            if len(row[0]) > 0:
+
+            if len(row[0]) > 0: # ignoring empty lines
+                print(f"Processing row: {converted}")
                 exchange_rate = self._add_aud_forex(converted[4])
                 converted.append(exchange_rate)
                 result.append(converted)

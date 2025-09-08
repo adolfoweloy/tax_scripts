@@ -49,7 +49,7 @@ class BalanceReportService(ReportService):
         if not current_balance_date:
             raise ValueError(f"Balance date not found at page {pages[page_index] + 1}")
 
-        balance_table = pdf_tables.extract_current_balance_data(label_locations, pages)
+        balance_table = pdf_tables.extract_data_table_after_location(label_locations, pages)
         exchange_rate_current_balance = self._br_to_aud_forex(current_balance_date)
         
         for row in balance_table[1:]:
